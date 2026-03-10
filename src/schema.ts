@@ -49,10 +49,10 @@ const typeDefs = gql`
     startJourney(name: String!, password: String!): String!
     login(name: String!, password: String!): String!
     createPokemon(
-      name: String!,
-      description: String!,
-      height: Float!,
-      weight: Float!,
+      name: String!
+      description: String!
+      height: Float!
+      weight: Float!
       types: [PokemonType!]!
     ): Pokemon!
     catchPokemon(pokemonId: ID!, nickname: String): OwnedPokemon!
