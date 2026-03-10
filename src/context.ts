@@ -1,15 +1,21 @@
-import { verifyToken } from "./auth/jwt.js";
-import Trainer from "./models/Trainer.js";
+import { verifyToken } from "./auth/jwt";
+import Trainer, { ITrainer } from "./models/Trainer";
 
-export const context = async ({ req }) => {
+interface ContextArgs {
+  req: any;
+}
+
+export const context = async ({ req }: ContextArgs) => {
   const header = req.headers.authorization || "";
 
   if (!header) return { user: null };
 
   try {
     const token = header.replace("Bearer ", "");
-    const decoded = verifyToken(token);
+    const decoded: any = verifyToken(token);
+
     const user = await Trainer.findById(decoded.id);
+
     return { user };
   } catch {
     return { user: null };
