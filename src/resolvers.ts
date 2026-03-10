@@ -1,34 +1,34 @@
 import bcrypt from "bcryptjs";
-import Trainer from "./models/Trainer.js";
-import Pokemon from "./models/Pokemon.js";
-import OwnedPokemon from "./models/OwnedPokemon.js";
-import { createToken } from "./auth/jwt.js";
+import Trainer from "./models/Trainer";
+import Pokemon from "./models/Pokemon";
+import OwnedPokemon from "./models/OwnedPokemon";
+import { createToken } from "./auth/jwt";
 
 const resolvers = {
   Query: {
-    me: async (_, __, { user }) => {
+    me: async (_: any, __: any, { user }: any) => {
       if (!user) return null;
 
-      return await Trainer.findById(user._id)
-        .populate({
-          path: "pokemons",
-          populate: { path: "pokemon" }
-        });
+      return await Trainer.findById(user._id).populate({
+        path: "pokemons",
+        populate: { path: "pokemon" }
+      });
     },
 
-    pokemons: async (_, { page = 1, size = 10 }) => {
+    pokemons: async (_: any, { page = 1, size = 10 }: any) => {
       const skip = (page - 1) * size;
       return await Pokemon.find().skip(skip).limit(size);
     },
 
-    pokemon: async (_, { id }) => {
+    pokemon: async (_: any, { id }: any) => {
       return await Pokemon.findById(id);
     }
   },
 
   Mutation: {
-    startJourney: async (_, { name, password }) => {
+    startJourney: async (_: any, { name, password }: any) => {
       const exists = await Trainer.findOne({ name });
+
       if (exists) {
         throw new Error("El entrenador ya existe");
       }
@@ -44,13 +44,15 @@ const resolvers = {
       return createToken(trainer);
     },
 
-    login: async (_, { name, password }) => {
+    login: async (_: any, { name, password }: any) => {
       const trainer = await Trainer.findOne({ name });
+
       if (!trainer) {
         throw new Error("Credenciales incorrectas");
       }
 
       const valid = await bcrypt.compare(password, trainer.password);
+
       if (!valid) {
         throw new Error("Credenciales incorrectas");
       }
@@ -58,7 +60,7 @@ const resolvers = {
       return createToken(trainer);
     },
 
-    createPokemon: async (_, args, { user }) => {
+    createPokemon: async (_: any, args: any, { user }: any) => {
       if (!user) {
         throw new Error("No autenticado");
       }
@@ -66,18 +68,19 @@ const resolvers = {
       return await Pokemon.create(args);
     },
 
-    catchPokemon: async (_, { pokemonId, nickname }, { user }) => {
+    catchPokemon: async (_: any, { pokemonId, nickname }: any, { user }: any) => {
       if (!user) {
         throw new Error("No autenticado");
       }
 
       const trainer = await Trainer.findById(user._id);
 
-      if (trainer.pokemons.length >= 6) {
+      if (trainer!.pokemons.length >= 6) {
         throw new Error("Un entrenador no puede tener más de 6 Pokémon");
       }
 
       const pokemon = await Pokemon.findById(pokemonId);
+
       if (!pokemon) {
         throw new Error("Pokémon no existe");
       }
@@ -92,31 +95,33 @@ const resolvers = {
         level: Math.floor(Math.random() * 100) + 1
       });
 
-      trainer.pokemons.push(ownedPokemon._id);
-      await trainer.save();
+      trainer!.pokemons.push(ownedPokemon._id);
+
+      await trainer!.save();
 
       return await ownedPokemon.populate("pokemon");
     },
 
-    freePokemon: async (_, { ownedPokemonId }, { user }) => {
+    freePokemon: async (_: any, { ownedPokemonId }: any, { user }: any) => {
       if (!user) {
         throw new Error("No autenticado");
       }
 
       const trainer = await Trainer.findById(user._id);
 
-      if (!trainer.pokemons.includes(ownedPokemonId)) {
+      if (!trainer!.pokemons.includes(ownedPokemonId)) {
         throw new Error("Este Pokémon no te pertenece");
       }
 
-      trainer.pokemons = trainer.pokemons.filter(
+      trainer!.pokemons = trainer!.pokemons.filter(
         (id) => id.toString() !== ownedPokemonId
       );
 
       await OwnedPokemon.findByIdAndDelete(ownedPokemonId);
-      await trainer.save();
 
-      return await Trainer.findById(trainer._id).populate({
+      await trainer!.save();
+
+      return await Trainer.findById(trainer!._id).populate({
         path: "pokemons",
         populate: { path: "pokemon" }
       });
